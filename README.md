@@ -30,18 +30,18 @@ A REST API for managing tasks with user authentication built with Node.js, Expre
 
 ### Installation
 
-1. Clone the repository
+1. Clone the repository : 
 git clone https://github.com/DAYAL-HARSH/task-manager-api
 
-2. Install Depedencies
+2. Install Depedencies : 
 npm install
 
-3. Create .env file in root folder 
+3. Create .env file in root folder : 
 MONGO_URL = your_mongodb_connection_string
 PORT = 5000
 JWT_SECRET = your_secret_key
 
-4. Run the server
+4. Run the server : 
 npm run dev
 
 ## API Endpoints
