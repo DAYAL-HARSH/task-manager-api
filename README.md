@@ -111,20 +111,20 @@ Authorization : Bearer your_token_here
 ## Project Structure
 
 task-manager-api/
-├── controllers/
-│   ├── authController.js
-│   └── taskController.js
-├── middleware/
-│   └── auth.js
-├── models/
-│   ├── User.js
-│   └── Task.js
-├── routes/
-│   ├── authRoutes.js
-│   └── taskRoutes.js
-├── .env
-├── server.js
-└── package.json
+ ├── controllers/
+ │   ├── authController.js
+ │   └── taskController.js
+ ├── middleware/
+ │   └── auth.js
+ ├── models/
+ │   ├── User.js
+ │   └── Task.js
+ ├── routes/
+ │   ├── authRoutes.js
+ │   └── taskRoutes.js
+ ├── .env
+ ├── server.js
+ └── package.json
 
 ## Author 
 HARSH DAYAL
