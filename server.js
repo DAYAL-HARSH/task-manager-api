@@ -23,3 +23,13 @@ app.listen(PORT, () =>{
     console.log(`Server is running on port ${PORT}`)
 })
 
+app.get('/', (req, res) => {
+  res.json ({
+    message : 'Task Manager API is running',
+    version : '1.0.0',
+    endpoints : {
+      auth : '/api/auth/register, /api/auth/login',
+      tasks : '/api/tasks'
+    }
+  })
+})
