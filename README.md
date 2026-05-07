@@ -39,12 +39,12 @@ git clone https://github.com/DAYAL-HARSH/task-manager-api
 npm install
 
 3. Create .env file in root folder : 
-MONGO_URL = your_mongodb_connection_string
-PORT = 5000
-JWT_SECRET = your_secret_key
+- MONGO_URL = your_mongodb_connection_string
+- PORT = 5000
+- JWT_SECRET = your_secret_key
 
 4. Run the server : 
-npm run dev
+- npm run dev
 
 ## API Endpoints
 
