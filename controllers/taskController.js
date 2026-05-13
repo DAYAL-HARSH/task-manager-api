@@ -2,18 +2,41 @@ const Task = require('../models/Task')
 
 const getTask = async (req, res) => {
     try {
-        const tasks = await Task.find({ user : req.userId })
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 10
+        const skip = (page - 1) * limit
 
-        res.status(200).json ({
-            message : 'Tasks fetched successfully',
-            count : tasks.length,
+        const filter = { user: req.userId }
+        if (req.query.status === 'completed') filter.completed = true
+        if (req.query.status === 'pending') filter.completed = false
+
+        const [tasks, totalTasks] = await Promise.all([
+            Task.find(filter)
+                .sort({ createdAt: -1 }) 
+                .skip(skip)
+                .limit(limit),
+            Task.countDocuments(filter)
+        ])
+
+        const totalPages = Math.ceil(totalTasks / limit)
+
+        res.status(200).json({
+            message: 'Tasks fetched successfully',
+            pagination: {
+                totalTasks,
+                totalPages,
+                currentPage: page,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            },
             tasks
         })
 
     } catch (error) {
-        res.status(500).json ({
-            message : 'Server error',
-            error : error.message
+        res.status(500).json({
+            message: 'Server error',
+            error: error.message
         })
     }
 }
