@@ -1,7 +1,7 @@
 const Groq = require('groq-sdk')
 
 const groq = new Groq({
-    apiKey: process.send.GROQ_API_KEY
+    apiKey: process.env.GROQ_API_KEY
 })
 
 const suggestTasks = async (req, res) => {
