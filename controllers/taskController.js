@@ -17,14 +17,14 @@ const getTask = async (req, res) => {
         const skip = (page - 1) * limit
         const status = req.query.status
 
-        const filter = { user: req.userId } 
+        const filter = { user: req.userId }
         if (status === 'completed') filter.completed = true
         if (status === 'pending') filter.completed = false
 
-        const cacheKey =  `tasks:${req.userId}:${page}:${limit}:${status || 'all'}`
+        const cacheKey = `tasks:${req.userId}:${page}:${limit}:${status || 'all'}`
 
         const cached = await redisClient.get(cacheKey)
-        if(cached) {
+        if (cached) {
             console.log('Cache hit:', cacheKey)
             return res.status(200).json({
                 ...JSON.parse(cached),
@@ -34,16 +34,15 @@ const getTask = async (req, res) => {
 
         console.log('Cache miss:', cacheKey)
 
-        const[tasks, totalTasks] = await Promise.all([
-            Task.find(filter)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit),
-            Task.countDocuments(filter)
+        const [tasks, totalTasks, activeCount, completedCount] = await Promise.all([
+            Task.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Task.countDocuments(filter),
+            Task.countDocuments({ user: req.userId, completed: false }),
+            Task.countDocuments({ user: req.userId, completed: true })
         ])
 
         const totalPages = Math.ceil(totalTasks / limit)
-        
+
         const responseData = {
             message: 'Tasks fetched successfully',
             pagination: {
@@ -54,6 +53,10 @@ const getTask = async (req, res) => {
                 hasNextPage: page < totalPages,
                 hasPrevPage: page > 1
             },
+            stats: {
+                active: activeCount,
+                completed: completedCount
+            },
             tasks
         }
 
@@ -63,6 +66,7 @@ const getTask = async (req, res) => {
             ...responseData,
             source: 'database'
         })
+
     } catch (error) {
         res.status(500).json({
             message: 'Server error',
