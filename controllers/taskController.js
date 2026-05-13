@@ -1,26 +1,50 @@
 const Task = require('../models/Task')
+const redisClient = require('../config/redisConfig')
+
+const clearUserCache = async (userId) => {
+    const keys = await redisClient.keys(`tasks:${userId}:*`)
+    if(keys.length > 0){
+        await redisClient.del(keys)
+        console.log(`Cache cleared for user: ${userId}`)
+    }
+}
+
 
 const getTask = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10
         const skip = (page - 1) * limit
+        const status = req.query.status
 
-        const filter = { user: req.userId }
-        if (req.query.status === 'completed') filter.completed = true
-        if (req.query.status === 'pending') filter.completed = false
+        const filter = { user: req.userId } 
+        if (status === 'completed') filter.completed = true
+        if (status === 'pending') filter.completed = false
 
-        const [tasks, totalTasks] = await Promise.all([
+        const cacheKey =  `tasks:${req.userId}:${page}:${limit}:${status || 'all'}`
+
+        const cached = await redisClient.get(cacheKey)
+        if(cached) {
+            console.log('Cache hit:', cacheKey)
+            return res.status(200).json({
+                ...JSON.parse(cached),
+                source: 'cache'
+            })
+        }
+
+        console.log('Cache miss:', cacheKey)
+
+        const[tasks, totalTasks] = await Promise.all([
             Task.find(filter)
-                .sort({ createdAt: -1 }) 
+                .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
             Task.countDocuments(filter)
         ])
 
         const totalPages = Math.ceil(totalTasks / limit)
-
-        res.status(200).json({
+        
+        const responseData = {
             message: 'Tasks fetched successfully',
             pagination: {
                 totalTasks,
@@ -31,8 +55,14 @@ const getTask = async (req, res) => {
                 hasPrevPage: page > 1
             },
             tasks
-        })
+        }
 
+        await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData))
+
+        res.status(200).json({
+            ...responseData,
+            source: 'database'
+        })
     } catch (error) {
         res.status(500).json({
             message: 'Server error',
@@ -40,6 +70,7 @@ const getTask = async (req, res) => {
         })
     }
 }
+
 
 const createTask = async (req, res) => {
     try {
@@ -56,6 +87,7 @@ const createTask = async (req, res) => {
             description, 
             user : req.userId 
         })
+        await clearUserCache(req.userId)
 
         res.status(201).json ({
             message : 'Task created successfully',
@@ -90,6 +122,7 @@ const updateTask = async (req, res) => {
         if (completed !== undefined) task.completed = completed 
 
         await task.save()
+        await clearUserCache(req.userId)
         
         res.status(200).json ({
             message : 'Task updated successfully',
@@ -118,6 +151,7 @@ const deleteTask = async (req, res) => {
         }
 
         await task.deleteOne()
+        await clearUserCache(req.userId)
         
         res.status(200).json ({
             message : 'Task deleted successfully'   

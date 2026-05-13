@@ -4,6 +4,7 @@ const cors = require('cors')
 const dotenv = require('dotenv')
 const rateLimit = require('express-rate-limit')
 const startReminderService = require('./services/reminderServices')
+const redisClient = require('./config/redisConfig')
 dotenv.config()
 
 const app = express()
